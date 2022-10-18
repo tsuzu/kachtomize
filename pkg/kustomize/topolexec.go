@@ -151,7 +151,19 @@ func (te *TopoloigcalExecutor) processKustomize(dir string) error {
 }
 
 func (te *TopoloigcalExecutor) build(dir string) (string, error) {
-	fp, err := os.CreateTemp("", "*.yaml")
+	tempDir, err := os.MkdirTemp("", "kachtomize-*")
+
+	if err != nil {
+		return "", fmt.Errorf("failed to create a temporary directory for %s: %w", dir, err)
+	}
+
+	err = os.WriteFile(filepath.Join(tempDir, "kustomization.yaml"), []byte(`resources: ["resource.yaml"]`), 0666)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to save a temporary kustomization.yaml for %s: %w", dir, err)
+	}
+
+	fp, err := os.Create(filepath.Join(tempDir, "resource.yaml"))
 
 	if err != nil {
 		return "", fmt.Errorf("failed to create a temporary file for %s: %w", dir, err)
