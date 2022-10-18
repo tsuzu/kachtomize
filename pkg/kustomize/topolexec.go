@@ -18,9 +18,11 @@ type TopoloigcalExecutor struct {
 	options  []string
 	numOfCPU int
 
-	wg       sync.WaitGroup
-	errCount atomic.Int32
-	ch       chan string
+	leftCount atomic.Int32
+	wg        sync.WaitGroup
+	errCount  atomic.Int32
+	ch        chan string
+	aborted   chan struct{}
 
 	ErrorChan chan error
 }
@@ -36,6 +38,7 @@ func NewTopologicalExecutor(nodes []Node, options []string, numOfCPU int) *Topol
 		nodes:    map[string]*topoNode{},
 		options:  options,
 		numOfCPU: numOfCPU,
+		aborted:  make(chan struct{}),
 	}
 
 	noDepNodes := make([]string, 0, 128)
@@ -55,6 +58,7 @@ func NewTopologicalExecutor(nodes []Node, options []string, numOfCPU int) *Topol
 	for i := range noDepNodes {
 		te.ch <- noDepNodes[i]
 	}
+	te.leftCount.Store(int32(len(nodes) - len(noDepNodes)))
 
 	return te
 }
@@ -73,6 +77,14 @@ func (te *TopoloigcalExecutor) Run() error {
 	return nil
 }
 
+func (te *TopoloigcalExecutor) abort() {
+	defer func() {
+		recover()
+	}()
+
+	close(te.aborted)
+}
+
 func (te *TopoloigcalExecutor) startWorker() {
 	for i := 0; i < te.numOfCPU; i++ {
 		te.wg.Add(1)
@@ -84,12 +96,20 @@ func (te *TopoloigcalExecutor) startWorker() {
 func (te *TopoloigcalExecutor) worker(ch <-chan string) {
 	defer te.wg.Done()
 
-	for c := range ch {
+	for {
+		var c string
+		select {
+		case c = <-ch:
+		case <-te.aborted:
+			return
+		}
+
 		err := te.processKustomize(c)
 
 		if err != nil {
 			te.errCount.Add(1)
 			te.ErrorChan <- err
+			te.abort()
 		}
 	}
 }
@@ -112,7 +132,15 @@ func (te *TopoloigcalExecutor) processKustomize(dir string) error {
 			pendingNode := te.nodes[pending]
 
 			if pendingNode.dependencies.Delete(dir) == 0 {
-				te.ch <- pending
+				select {
+				case te.ch <- pending:
+				case <-te.aborted:
+					return
+				}
+
+				if te.leftCount.Add(-1) == 0 {
+					close(te.ch)
+				}
 			}
 		}
 	}()
