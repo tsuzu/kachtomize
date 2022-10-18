@@ -101,8 +101,12 @@ func (te *TopoloigcalExecutor) worker(ch <-chan string) {
 
 	for {
 		var c string
+		var ok bool
 		select {
-		case c = <-ch:
+		case c, ok = <-ch:
+			if !ok {
+				return
+			}
 		case <-te.aborted:
 			return
 		}
