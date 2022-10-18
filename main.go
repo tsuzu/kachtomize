@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"log"
-	"os"
 	"runtime"
 	"sync"
 
@@ -57,8 +55,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	e := json.NewEncoder(os.Stdout)
-	e.SetIndent("", "  ")
+	e := kustomize.NewTopologicalExecutor(nodes, kustomizeOptions, runtime.GOMAXPROCS(0))
 
-	e.Encode(nodes)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for err := range e.ErrorChan {
+			if err != nil {
+				log.Printf("analyzer failed: %+v", err)
+			}
+		}
+	}()
+
+	err = e.Run()
+	wg.Wait()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
