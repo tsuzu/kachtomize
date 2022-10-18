@@ -67,6 +67,12 @@ func NewTopologicalExecutor(nodes []Node, options []string, numOfCPU int) *Topol
 }
 
 func (te *TopoloigcalExecutor) Run() error {
+	if te.leftCount.Load() == 0 {
+		close(te.ErrorChan)
+
+		return nil
+	}
+
 	te.startWorker()
 
 	te.wg.Wait()
