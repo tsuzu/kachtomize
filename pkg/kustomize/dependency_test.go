@@ -29,7 +29,7 @@ func TestDependencyAnalyzer_Run(t *testing.T) {
 			want: []Node{
 				{
 					AbsDirPath:    "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir",
-					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/kustomizayion.yaml",
+					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/kustomization.yaml",
 					DependedBy:    []string{},
 					Dependencies: []string{
 						"/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b",
@@ -37,7 +37,7 @@ func TestDependencyAnalyzer_Run(t *testing.T) {
 				},
 				{
 					AbsDirPath:    "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b",
-					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/kustomizayion.yaml",
+					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/kustomization.yml",
 					DependedBy: []string{
 						"/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir",
 					},
@@ -48,7 +48,7 @@ func TestDependencyAnalyzer_Run(t *testing.T) {
 				},
 				{
 					AbsDirPath:    "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/c",
-					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/c/kustomizayion.yaml",
+					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/c/kustomization.yaml",
 					DependedBy: []string{
 						"/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b",
 					},
@@ -56,7 +56,7 @@ func TestDependencyAnalyzer_Run(t *testing.T) {
 				},
 				{
 					AbsDirPath:    "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/c2",
-					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/c2/kustomizayion.yaml",
+					KustomizePath: "/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b/c2/kustomization.yaml",
 					DependedBy: []string{
 						"/Users/tsuzu/workspace/hobby/kachtomize/pkg/kustomize/testdata/dir/a/b",
 					},
