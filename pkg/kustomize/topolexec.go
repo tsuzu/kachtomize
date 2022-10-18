@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 
@@ -122,7 +123,7 @@ func (te *TopoloigcalExecutor) processKustomize(dir string) error {
 		return fmt.Errorf("kustomize build failed: %w", err)
 	}
 
-	err = te.replaceKustomize(te.nodes[dir].kustomizePath, built)
+	err = te.replaceKustomize(dir, te.nodes[dir].kustomizePath, built)
 
 	if err != nil {
 		return fmt.Errorf("failed to replace kustomization.yaml in %s: %w", dir, err)
@@ -171,7 +172,7 @@ func (te *TopoloigcalExecutor) build(dir string) (string, error) {
 	return fp.Name(), nil
 }
 
-func (te *TopoloigcalExecutor) replaceKustomize(kustomizeFile, builtPath string) error {
+func (te *TopoloigcalExecutor) replaceKustomize(dir, kustomizeFile, builtPath string) error {
 	fp, err := os.Create(kustomizeFile)
 
 	if err != nil {
@@ -179,13 +180,19 @@ func (te *TopoloigcalExecutor) replaceKustomize(kustomizeFile, builtPath string)
 	}
 	defer fp.Close()
 
+	relPath, err := filepath.Rel(dir, builtPath)
+
+	if err != nil {
+		return fmt.Errorf("failed to get relative path: %w", err)
+	}
+
 	k := types.Kustomization{
 		TypeMeta: types.TypeMeta{
 			Kind:       "Kustomization",
 			APIVersion: "kustomize.config.k8s.io/v1beta1",
 		},
 		Resources: []string{
-			builtPath,
+			relPath,
 		},
 	}
 
