@@ -181,7 +181,7 @@ func (te *TopoloigcalExecutor) build(dir string) (string, error) {
 		return "", fmt.Errorf("processing %s failed(%v): %s", dir, err, stderrBuffer.String())
 	}
 
-	return fp.Name(), nil
+	return tempDir, nil
 }
 
 func (te *TopoloigcalExecutor) replaceKustomize(dir, kustomizeFile, builtPath string) error {
