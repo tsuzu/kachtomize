@@ -1,1 +1,12 @@
-a: b
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-d
+spec:
+  containers:
+  - image: nginx
+    name: pod-1
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
