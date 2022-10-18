@@ -74,12 +74,10 @@ func (te *TopoloigcalExecutor) Run() error {
 }
 
 func (te *TopoloigcalExecutor) startWorker() {
-	ch := make(chan string, 1)
-
 	for i := 0; i < te.numOfCPU; i++ {
 		te.wg.Add(1)
 
-		go te.worker(ch)
+		go te.worker(te.ch)
 	}
 }
 
