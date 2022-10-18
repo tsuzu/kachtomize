@@ -1,3 +1,4 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+- /var/folders/1h/zkthvbqx30377mnpqygj0xph0000gn/T/1724099437.yaml

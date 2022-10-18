@@ -35,10 +35,11 @@ type topoNode struct {
 
 func NewTopologicalExecutor(nodes []Node, options []string, numOfCPU int) *TopoloigcalExecutor {
 	te := &TopoloigcalExecutor{
-		nodes:    map[string]*topoNode{},
-		options:  options,
-		numOfCPU: numOfCPU,
-		aborted:  make(chan struct{}),
+		nodes:     map[string]*topoNode{},
+		options:   options,
+		numOfCPU:  numOfCPU,
+		aborted:   make(chan struct{}),
+		ErrorChan: make(chan error, 1),
 	}
 
 	noDepNodes := make([]string, 0, 128)
