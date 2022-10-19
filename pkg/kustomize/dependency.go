@@ -34,6 +34,7 @@ type Node struct {
 }
 
 type node struct {
+	invalid       bool
 	kustomizePath string
 	depenededBy   *sets.SyncSet[string]
 	dependencies  []string
@@ -106,6 +107,8 @@ func (da *DependencyAnalyzer) worker(ch <-chan string) {
 		err := da.processKustomize(c)
 
 		if err != nil {
+			da.nodes[filepath.Dir(c)].invalid = true
+
 			if !da.ignoreErrors {
 				da.errCount.Add(1)
 			}
@@ -142,6 +145,13 @@ func (da *DependencyAnalyzer) processKustomize(file string) error {
 
 	dir := filepath.Dir(file)
 	selfNode := da.nodes[dir]
+
+	if k.Kind != "Kustomization" {
+		selfNode.invalid = true
+
+		return nil
+	}
+
 	for _, d := range k.Resources {
 		if hasRemoteFileScheme(d) {
 			continue
@@ -172,6 +182,10 @@ func (da *DependencyAnalyzer) generateNodes() []Node {
 	nodes := make([]Node, 0, len(da.nodes))
 
 	for key, value := range da.nodes {
+		if value.invalid {
+			continue
+		}
+
 		nodes = append(nodes, Node{
 			AbsDirPath:    key,
 			KustomizePath: value.kustomizePath,

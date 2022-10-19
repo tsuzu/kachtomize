@@ -3,7 +3,6 @@ package kustomize
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -175,8 +174,6 @@ func (te *TopoloigcalExecutor) processKustomize(dir string) error {
 }
 
 func (te *TopoloigcalExecutor) build(dir string) (string, error) {
-	log.Println(dir)
-
 	tempDir, err := os.MkdirTemp("", "kachtomize-*")
 
 	if err != nil {

@@ -72,7 +72,7 @@ func main() {
 		defer wg.Done()
 		for err := range e.ErrorChan {
 			if err != nil {
-				log.Printf("analyzer failed: %+v", err)
+				log.Printf("executor failed: %+v", err)
 			}
 		}
 	}()
