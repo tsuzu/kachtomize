@@ -39,7 +39,7 @@ func (s *SyncSet[K]) Delete(k K) int {
 	return len(s.m)
 }
 
-func (s *SyncSet[K]) Size(k K) int {
+func (s *SyncSet[K]) Size() int {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

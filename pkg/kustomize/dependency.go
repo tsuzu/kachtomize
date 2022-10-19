@@ -15,8 +15,9 @@ import (
 )
 
 type DependencyAnalyzer struct {
-	kustomizes []string
-	numOfCPU   int
+	kustomizes  []string
+	ignoreError bool
+	numOfCPU    int
 
 	wg       sync.WaitGroup
 	nodes    map[string]*node
@@ -38,12 +39,13 @@ type node struct {
 	dependencies  []string
 }
 
-func NewDependencyAnalyzer(kustomizes []string, numOfCPU int) *DependencyAnalyzer {
+func NewDependencyAnalyzer(kustomizes []string, ignoreError bool, numOfCPU int) *DependencyAnalyzer {
 	da := DependencyAnalyzer{
-		kustomizes: kustomizes,
-		numOfCPU:   numOfCPU,
-		nodes:      map[string]*node{},
-		ErrorChan:  make(chan error, 1),
+		kustomizes:  kustomizes,
+		ignoreError: ignoreError,
+		numOfCPU:    numOfCPU,
+		nodes:       map[string]*node{},
+		ErrorChan:   make(chan error, 1),
 	}
 
 	return &da
@@ -104,7 +106,10 @@ func (da *DependencyAnalyzer) worker(ch <-chan string) {
 		err := da.processKustomize(c)
 
 		if err != nil {
-			da.errCount.Add(1)
+			if !da.ignoreError {
+				da.errCount.Add(1)
+			}
+
 			da.ErrorChan <- err
 		}
 	}

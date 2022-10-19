@@ -49,10 +49,23 @@ func NewTopologicalExecutor(nodes []Node, options []string, numOfCPU int) *Topol
 		te.nodes[node.AbsDirPath] = &topoNode{
 			kustomizePath: node.KustomizePath,
 			depenededBy:   node.DependedBy,
-			dependencies:  sets.FromSlice(node.Dependencies),
+			dependencies:  sets.NewSyncSet[string](),
 		}
 
-		if len(node.Dependencies) == 0 {
+	}
+
+	for _, node := range nodes {
+		selfNode := te.nodes[node.AbsDirPath]
+
+		for _, dep := range node.Dependencies {
+			_, ok := te.nodes[dep]
+
+			if ok {
+				selfNode.dependencies.Add(dep)
+			}
+		}
+
+		if selfNode.dependencies.Size() == 0 {
 			noDepNodes = append(noDepNodes, node.AbsDirPath)
 		}
 	}

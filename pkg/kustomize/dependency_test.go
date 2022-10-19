@@ -67,7 +67,7 @@ func TestDependencyAnalyzer_Run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			da := *NewDependencyAnalyzer(tt.fields.kustomizes, runtime.GOMAXPROCS(0))
+			da := *NewDependencyAnalyzer(tt.fields.kustomizes, false, runtime.GOMAXPROCS(0))
 			got, err := da.Run()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DependencyAnalyzer.Run() error = %v, wantErr %v", err, tt.wantErr)

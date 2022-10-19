@@ -11,11 +11,14 @@ import (
 )
 
 var (
+	ignoreError      bool
 	dir              string
 	kustomizeOptions []string
 )
 
 func init() {
+	flag.BoolVar(&ignoreError, "ignore-error", false, "Ignore corrupting kustomization.yaml")
+
 	flag.Parse()
 
 	dir = flag.Arg(0)
@@ -42,7 +45,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	analyzer := kustomize.NewDependencyAnalyzer(targets, runtime.GOMAXPROCS(0))
+	analyzer := kustomize.NewDependencyAnalyzer(targets, ignoreError, runtime.GOMAXPROCS(0))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
