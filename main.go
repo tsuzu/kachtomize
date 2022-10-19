@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"path/filepath"
 	"runtime"
 	"sync"
 
@@ -30,6 +31,12 @@ func init() {
 
 func main() {
 	targets, err := kustomize.ListKustomizeTarget(dir)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	targets, err = kustomize.FilterByIgnore(filepath.Join(dir, ".kacheignore"), targets)
 
 	if err != nil {
 		log.Fatal(err)
