@@ -2,6 +2,7 @@ package kustomize
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -109,25 +110,38 @@ func (da *DependencyAnalyzer) worker(ch <-chan string) {
 	}
 }
 
+func hasRemoteFileScheme(path string) bool {
+	u, err := url.Parse(path)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https")
+}
+
 func (da *DependencyAnalyzer) processKustomize(file string) error {
-	b, err := os.ReadFile(file)
+	content, err := os.ReadFile(file)
 
 	if err != nil {
 		return fmt.Errorf("failed to open %s: %w", file, err)
 	}
 
-	var k types.Kustomization
+	content, err = types.FixKustomizationPreUnmarshalling(content)
 
-	if err := k.Unmarshal(b); err != nil {
-		return fmt.Errorf("failed to unmarshal %s: %w", file, err)
+	if err != nil {
+		return fmt.Errorf("failed to fix kustomization.yaml %s: %w", file, err)
 	}
 
-	// k.Resources is overwritten
-	deps := append(k.Resources, k.Bases...)
+	var k types.Kustomization
+
+	if err := k.Unmarshal(content); err != nil {
+		return fmt.Errorf("failed to unmarshal %s: %w", file, err)
+	}
+	k.FixKustomizationPostUnmarshalling()
 
 	dir := filepath.Dir(file)
 	selfNode := da.nodes[dir]
-	for _, d := range deps {
+	for _, d := range k.Resources {
+		if hasRemoteFileScheme(d) {
+			continue
+		}
+
 		d = filepath.Join(dir, d)
 
 		cleaned, err := pathutil.CleanFilepath(d)
