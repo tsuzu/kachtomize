@@ -5,7 +5,6 @@ go 1.19
 require (
 	golang.org/x/sync v0.1.0
 	sigs.k8s.io/kustomize/api v0.12.1
-	// sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9
 )
 
@@ -38,4 +37,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace sigs.k8s.io/kustomize/api v0.12.1 => github.com/tsuzu/kustomize/api v0.0.0-20221022105630-3765d3fcbc04
+replace (
+	sigs.k8s.io/kustomize/api v0.12.1 => github.com/tsuzu/kustomize/api v0.0.0-20221022105630-3765d3fcbc04
+	sigs.k8s.io/kustomize/kyaml v0.13.9 => github.com/tsuzu/kustomize/kyaml v0.0.0-20221022105630-3765d3fcbc04
+)
