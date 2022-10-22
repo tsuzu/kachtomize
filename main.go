@@ -16,12 +16,12 @@ import (
 )
 
 var (
-	outputDir string
-	loadDirs  []string
+	outputFileName string
+	loadDirs       []string
 )
 
 func init() {
-	flag.StringVar(&outputDir, "o", "artifacts", "Output directory")
+	flag.StringVar(&outputFileName, "o", "artifact.yaml", "Output filename")
 
 	flag.Parse()
 
@@ -50,7 +50,7 @@ func main() {
 
 	krunner := krunner.New(kustomizerInit, fs, runtime.GOMAXPROCS(0))
 	krunner.RegisterCallback(func(dir string, data []byte) {
-		fileName := filepath.Join(outputDir, dir+".yaml")
+		fileName := filepath.Join(dir, outputFileName)
 
 		if err := os.MkdirAll(filepath.Dir(fileName), 0777); err != nil {
 			panic(err)
