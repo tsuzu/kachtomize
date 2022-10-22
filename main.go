@@ -1,86 +1,93 @@
 package main
 
 import (
+	"bufio"
 	"flag"
-	"log"
+	"io"
+	"os"
 	"path/filepath"
 	"runtime"
-	"sync"
 
-	"github.com/tsuzu/kachtomize/pkg/kustomize"
+	"github.com/tsuzu/kachtomize/pkg/fsloader"
+	"github.com/tsuzu/kachtomize/pkg/fsutil"
+	"github.com/tsuzu/kachtomize/pkg/krunner"
+	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/api/types"
 )
 
 var (
-	ignoreErrors     bool
-	dir              string
-	kustomizeOptions []string
+	outputDir string
+	loadDirs  []string
 )
 
 func init() {
-	flag.BoolVar(&ignoreErrors, "ignore-errors", false, "Ignore corrupting kustomization.yaml while analyzing")
+	flag.StringVar(&outputDir, "o", "artifacts", "Output directory")
 
 	flag.Parse()
 
-	dir = flag.Arg(0)
-
-	if flag.NArg() >= 2 {
-		if flag.Arg(1) != "--" {
-			log.Fatal("Unknown flag ", flag.Arg(1))
-		}
-
-		kustomizeOptions = flag.Args()[2:]
-	}
+	loadDirs = flag.Args()
 }
 
 func main() {
-	targets, err := kustomize.ListKustomizeTarget(dir)
+	fs := fsutil.MakeFsInMemory()
+	loader := fsloader.New(fs)
 
-	if err != nil {
-		log.Fatal(err)
+	if err := loader.LoadAll(loadDirs, runtime.GOMAXPROCS(0)); err != nil {
+		panic(err)
 	}
 
-	targets, err = kustomize.FilterByIgnore(filepath.Join(dir, ".kacheignore"), targets)
+	fs = fsutil.NewReadOnlyFS(fs)
 
-	if err != nil {
-		log.Fatal(err)
+	kustomizerInit := func() *krusty.Kustomizer {
+		opt := krusty.MakeDefaultOptions()
+		c := types.EnabledPluginConfig(types.BploUseStaticallyLinked)
+		c.FnpLoadingOptions.EnableExec = true
+		opt.LoadRestrictions = types.LoadRestrictionsNone
+		opt.PluginConfig = c
+
+		return krusty.MakeKustomizer(opt)
 	}
 
-	analyzer := kustomize.NewDependencyAnalyzer(targets, ignoreErrors, runtime.GOMAXPROCS(0))
+	krunner := krunner.New(kustomizerInit, fs, runtime.GOMAXPROCS(0))
+	krunner.RegisterCallback(func(dir string, data []byte) {
+		fileName := filepath.Join(outputDir, dir+".yaml")
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for err := range analyzer.ErrorChan {
-			if err != nil {
-				log.Printf("analyzer failed: %+v", err)
-			}
+		if err := os.MkdirAll(filepath.Dir(fileName), 0777); err != nil {
+			panic(err)
 		}
-	}()
 
-	nodes, err := analyzer.Run()
-	wg.Wait()
+		if err := os.WriteFile(fileName, data, 0777); err != nil {
+			panic(err)
+		}
+	})
+
+	wd, err := os.Getwd()
 
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	e := kustomize.NewTopologicalExecutor(nodes, kustomizeOptions, runtime.GOMAXPROCS(0))
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		// ファイルパスがそんな長いわけないのでisPrefixは無視します
+		line, _, err := reader.ReadLine()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for err := range e.ErrorChan {
-			if err != nil {
-				log.Printf("executor failed: %+v", err)
+		if err != nil {
+			if err == io.EOF {
+				break
 			}
+
+			panic(err)
 		}
-	}()
 
-	err = e.Run()
-	wg.Wait()
+		if len(line) == 0 {
+			continue
+		}
 
-	if err != nil {
-		log.Fatal(err)
+		krunner.Enqueue(filepath.Join(wd, string(line)))
+	}
+
+	if !krunner.Wait() {
+		os.Exit(1)
 	}
 }
