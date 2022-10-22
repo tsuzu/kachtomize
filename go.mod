@@ -38,6 +38,6 @@ require (
 )
 
 replace (
-	sigs.k8s.io/kustomize/api v0.12.1 => github.com/tsuzu/kustomize/api v0.0.0-20221022105630-3765d3fcbc04
-	sigs.k8s.io/kustomize/kyaml v0.13.9 => github.com/tsuzu/kustomize/kyaml v0.0.0-20221022105630-3765d3fcbc04
+	sigs.k8s.io/kustomize/api v0.12.1 => github.com/tsuzu/kustomize/api v0.0.0-20221022113024-72ddce9077c1
+	sigs.k8s.io/kustomize/kyaml v0.13.9 => github.com/tsuzu/kustomize/kyaml v0.0.0-20221022113024-72ddce9077c1
 )
