@@ -13,15 +13,18 @@ import (
 	"github.com/tsuzu/kachtomize/pkg/krunner"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/api/types"
+	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
 
 var (
 	outputFileName string
+	useInMemFS     bool
 	loadDirs       []string
 )
 
 func init() {
 	flag.StringVar(&outputFileName, "o", "artifact.yaml", "Output filename")
+	flag.BoolVar(&useInMemFS, "inmemfs", false, "Load files on memory before kustomize build")
 
 	flag.Parse()
 
@@ -29,14 +32,18 @@ func init() {
 }
 
 func main() {
-	fs := fsutil.MakeFsInMemory()
-	loader := fsloader.New(fs)
+	fs := filesys.MakeFsOnDisk()
 
-	if err := loader.LoadAll(loadDirs, runtime.GOMAXPROCS(0)); err != nil {
-		panic(err)
+	if useInMemFS {
+		fs = fsutil.MakeFsInMemory()
+		loader := fsloader.New(fs)
+
+		if err := loader.LoadAll(loadDirs, runtime.GOMAXPROCS(0)); err != nil {
+			panic(err)
+		}
+
+		fs = fsutil.NewReadOnlyFS(fs)
 	}
-
-	fs = fsutil.NewReadOnlyFS(fs)
 
 	kustomizerInit := func() *krusty.Kustomizer {
 		opt := krusty.MakeDefaultOptions()
