@@ -33,13 +33,13 @@ func New(kustomizerInit func() *krusty.Kustomizer, fSys filesys.FileSystem, numO
 		requestCh:      make(chan string, 1),
 		resultCh:       make(chan result, 1),
 	}
+	r.callbackWg.Add(1)
 	go r.startWorker(numOfCPU)
 
 	return r
 }
 
 func (r *Runner) startWorker(numOfCPU int) {
-	r.callbackWg.Add(1)
 	go r.callCallbackWorker()
 
 	var wg sync.WaitGroup
